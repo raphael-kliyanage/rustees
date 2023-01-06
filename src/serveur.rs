@@ -7,11 +7,13 @@ fn handle_client(mut stream: TcpStream) {
     while match stream.read(&mut data) {
         Ok(size) => {
             // echo everything!
+            // remplacer le unwrap()
             stream.write(&data[0..size]).unwrap();
             true
         },
         Err(_) => {
             println!("An error occurred, terminating connection with {}", stream.peer_addr().unwrap());
+            // remplacer le unwrap()
             stream.shutdown(Shutdown::Both).unwrap();
             false
         }
@@ -19,12 +21,14 @@ fn handle_client(mut stream: TcpStream) {
 }
 
 fn main() {
+    // remplacer le unwrap()
     let listener = TcpListener::bind("0.0.0.0:25566").unwrap();
     // accept connections and process them, spawning a new thread for each one
     println!("Serveur en écoute sur le port 25566");
     for stream in listener.incoming() {
         match stream {
             Ok(stream) => {
+                // remplacer le unwrap()
                 println!("Nouvelle connexion : {}", stream.peer_addr().unwrap());
                 thread::spawn(move|| {
                     // connection succeeded

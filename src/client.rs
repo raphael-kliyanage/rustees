@@ -9,6 +9,7 @@ fn main() {
 
             let msg = b"Hello!";
 
+            // remplacer le unwrap()
             stream.write(msg).unwrap();
             println!("Message envoyé, en attente d'une réponse...");
 
@@ -18,6 +19,7 @@ fn main() {
                     if &data == msg {
                         println!("Reply ok!");
                     } else {
+                        // remplacer le unwrap()
                         let text = from_utf8(&data).unwrap();
                         println!("Réponse innatendu : {}", text);
                     }
