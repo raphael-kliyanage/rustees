@@ -7,29 +7,29 @@ fn main() {
         Ok(mut stream) => {
             println!("Conneté au port 25566");
 
-            let msg = b"Hello!";
+            let msg = b"Hello world!";
 
             stream.write(msg).unwrap();
-            println!("Sent Hello, awaiting reply...");
+            println!("Message envoyé, en attente d'une réponse...");
 
             let mut data = [0 as u8; 6]; // using 6 byte buffer
             match stream.read_exact(&mut data) {
                 Ok(_) => {
                     if &data == msg {
-                        println!("Reply is ok!");
+                        println!("Réponse reçu !");
                     } else {
                         let text = from_utf8(&data).unwrap();
-                        println!("Unexpected reply: {}", text);
+                        println!("Réponse innatendu : {}", text);
                     }
                 },
                 Err(e) => {
-                    println!("Failed to receive data: {}", e);
+                    println!("Aucune réponse de reçu : {}", e);
                 }
             }
         },
         Err(e) => {
-            println!("Failed to connect: {}", e);
+            println!("Impossible de se connecter au port 25566 : {}", e);
         }
     }
-    println!("Terminated.");
+    println!("Terminé");
 }
