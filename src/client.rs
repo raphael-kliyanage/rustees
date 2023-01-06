@@ -15,7 +15,7 @@ fn main() {
 
             let mut data = [0 as u8; 6]; // using 6 byte buffer
             match stream.read_exact(&mut data) {
-                Ok(_) => {
+                Ok(()) => {
                     if &data == msg {
                         println!("Reply ok!");
                     } else {
