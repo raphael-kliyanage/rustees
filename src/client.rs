@@ -7,7 +7,7 @@ fn main() {
         Ok(mut stream) => {
             println!("Conneté au port 25566");
 
-            let msg = b"Hello world!";
+            let msg = b"Hello!";
 
             stream.write(msg).unwrap();
             println!("Message envoyé, en attente d'une réponse...");
@@ -16,7 +16,7 @@ fn main() {
             match stream.read_exact(&mut data) {
                 Ok(_) => {
                     if &data == msg {
-                        println!("Réponse reçu !");
+                        println!("Reply ok!");
                     } else {
                         let text = from_utf8(&data).unwrap();
                         println!("Réponse innatendu : {}", text);

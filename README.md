@@ -10,3 +10,4 @@ git pull
 git push
 ```
 ### La branche main est réservé uniquement lorsque tous les membres ont validés le code
+La branche validation est notre branche réservé pour ajouter les nouvelles fonctionnalitées.

@@ -19,9 +19,9 @@ fn handle_client(mut stream: TcpStream) {
 }
 
 fn main() {
-    let listener = TcpListener::bind("0.0.0.0:3333").unwrap();
+    let listener = TcpListener::bind("0.0.0.0:25566").unwrap();
     // accept connections and process them, spawning a new thread for each one
-    println!("Server listening on port 3333");
+    println!("Server listening on port 25565");
     for stream in listener.incoming() {
         match stream {
             Ok(stream) => {
