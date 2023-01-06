@@ -1,5 +1,12 @@
 # rustees
 
+### Pour lancer les programmes
+Lancer 2 terminal et saisir les commandes séparemment :
+```
+cargo run --bin serveur
+cargo run --bin client
+```
+
 ### Pour implémenter notre code non-validé
 ```
 git checkout validation

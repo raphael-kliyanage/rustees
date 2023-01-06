@@ -21,18 +21,18 @@ fn handle_client(mut stream: TcpStream) {
 fn main() {
     let listener = TcpListener::bind("0.0.0.0:25566").unwrap();
     // accept connections and process them, spawning a new thread for each one
-    println!("Server listening on port 25565");
+    println!("Serveur en écoute sur le port 25566");
     for stream in listener.incoming() {
         match stream {
             Ok(stream) => {
-                println!("New connection: {}", stream.peer_addr().unwrap());
+                println!("Nouvelle connexion : {}", stream.peer_addr().unwrap());
                 thread::spawn(move|| {
                     // connection succeeded
                     handle_client(stream)
                 });
             }
             Err(e) => {
-                println!("Error: {}", e);
+                println!("Echec de la connexion : {}", e);
                 /* connection failed */
             }
         }
