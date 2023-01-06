@@ -12,7 +12,8 @@ fn handle_client(mut stream: TcpStream) {
             true
         },
         Err(_) => {
-            println!("An error occurred, terminating connection with {}", stream.peer_addr().unwrap());
+            println!("An error occurred, terminating connection with {}", 
+                stream.peer_addr().unwrap());
             // remplacer le unwrap()
             stream.shutdown(Shutdown::Both).unwrap();
             false
@@ -29,7 +30,8 @@ fn main() {
         match stream {
             Ok(stream) => {
                 // remplacer le unwrap()
-                println!("Nouvelle connexion : {}", stream.peer_addr().unwrap());
+                println!("Nouvelle connexion : {}",
+                    stream.peer_addr().unwrap());
                 thread::spawn(move|| {
                     // connection succeeded
                     handle_client(stream)
