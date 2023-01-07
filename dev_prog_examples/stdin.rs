@@ -18,16 +18,20 @@ fn main() {
             println!("Message envoyé, en attente d'une réponse...");
 
            let mut data = [0 as u8; 12]; // using 12 byte buffer
- //        match stream.read_exact(&mut data) {
- //            Ok(()) => {
- //                if &data == msg_octet {
- //                    println!("Reply ok!");
- //                } else {
- //                    // remplacer le unwrap()
- //                    let text = from_utf8(&data).unwrap();
- //                    println!("Réponse innatendu : {}", text);
- //                }
- //            },
+           match stream.read_exact(&mut data) {
+               Ok(()) => {
+                   if &data == msg_octet {
+                       println!("Reply ok!");
+                   } else {
+                       // remplacer le unwrap()
+                       let text = from_utf8(&data).unwrap();
+                       println!("Réponse innatendu : {}", text);
+                   }
+               },
+               Err(e) => {
+                   println!("Aucune réponse de reçu : {}", e);
+               }
+            }
         }, Err(e) => {
             println!("Impossible de se connecter au serveur !");
         }
