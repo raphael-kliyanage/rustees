@@ -17,9 +17,9 @@ fn main() {
             stream.write(msg_octet).unwrap();
             println!("Message envoyé, en attente d'une réponse...");
 
-           let mut data = [0 as u8; 12]; // using 12 byte buffer
-           match stream.read_exact(&mut data) {
-               Ok(()) => {
+           let mut data = [0; 12]; // using 12 byte buffer
+           match stream.read(&mut data) {
+               Ok(size) => {
                    if &data == msg_octet {
                        println!("Reply ok!");
                    } else {

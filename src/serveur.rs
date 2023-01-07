@@ -11,6 +11,8 @@ fn handle_client(mut stream: TcpStream) {
             // echo everything!
             // remplacer le unwrap()
             stream.write(&data[0..size]).unwrap();
+            // ligne pour voir ce que le serveur reçoit et l'afficher (bug)
+            //println!("client : {:#?}", stream.read_exact(&mut data[0..size]));
             true
         },
         Err(_) => {
