@@ -12,6 +12,7 @@ fn handle_client(mut stream: TcpStream) {
             // echo everything!
             // remplacer le unwrap()
             stream.write(&data[0..size]).unwrap();
+            // voir ce que reçoit le serveur
             let text = from_utf8(&data).unwrap();
             println!("Client : {}", text);
             true
