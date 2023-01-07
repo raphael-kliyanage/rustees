@@ -7,13 +7,14 @@ fn main() {
         Ok(mut stream) => {
             println!("Conneté au port 25566");
 
-            let msg = b"Hello!";
+            let msg = b"Hello world!";
 
             // remplacer le unwrap()
             stream.write(msg).unwrap();
             println!("Message envoyé, en attente d'une réponse...");
 
-            let mut data = [0 as u8; 6]; // using 6 byte buffer
+            // augmenter la taille des données transmis
+            let mut data = [0 as u8; 12]; // using 12 byte buffer
             match stream.read_exact(&mut data) {
                 Ok(()) => {
                     if &data == msg {

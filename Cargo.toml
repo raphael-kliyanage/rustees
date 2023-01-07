@@ -18,3 +18,8 @@ path = "src/serveur.rs"
 [[bin]]
 name = "client"
 path = "src/client.rs"
+
+# binaire dev pour comprendre les user's input
+[[bin]]
+name = "stdin"
+path = "dev_prog_examples/stdin.rs"
