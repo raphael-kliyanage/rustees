@@ -3,36 +3,37 @@ use std::io::{Read, Write};
 use std::str::from_utf8;
 
 fn main() {
+    let mut message = String::new();
+    println!("Saisir votre message :");
+    let buffer = std::io::stdin().read_line(&mut message).unwrap();
+    println!("Votre prénom est : {}", message);
+    println!("Taille du buffer à lire : {}", buffer);
+    let msg_octet = message.as_bytes();
+
     match TcpStream::connect("localhost:25566") {
         Ok(mut stream) => {
             println!("Conneté au port 25566");
-
-            let msg = b"Hello world!";
-
-            // remplacer le unwrap()
-            stream.write(msg).unwrap();
+            stream.write(msg_octet).unwrap();
             println!("Message envoyé, en attente d'une réponse...");
 
-            // augmenter la taille des données transmis
-            let mut data = [0 as u8; 12]; // using 12 byte buffer
-            match stream.read_exact(&mut data) {
-                Ok(()) => {
-                    if &data == msg {
-                        println!("Reply ok!");
-                    } else {
-                        // remplacer le unwrap()
-                        let text = from_utf8(&data).unwrap();
-                        println!("Réponse innatendu : {}", text);
-                    }
-                },
-                Err(e) => {
-                    println!("Aucune réponse de reçu : {}", e);
-                }
+           let mut data = [0; 12]; // using 12 byte buffer
+           match stream.read(&mut data) {
+               Ok(_size) => {
+                   if &data == msg_octet {
+                       println!("Reply ok!");
+                   } else {
+                       // remplacer le unwrap()
+                       let text = from_utf8(&data).unwrap();
+                       println!("Réponse innatendu : {}", text);
+                   }
+               },
+               Err(_e) => {
+                   println!("Aucune réponse de reçu : {}", _e);
+               }
             }
-        },
-        Err(e) => {
-            println!("Impossible de se connecter au port 25566 : {}", e);
+        }, Err(_e) => {
+            println!("Impossible de se connecter au serveur !");
         }
     }
-    println!("Terminé");
+    println!("fin");
 }

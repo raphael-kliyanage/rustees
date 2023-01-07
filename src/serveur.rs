@@ -1,6 +1,7 @@
 use std::thread;
 use std::net::{TcpListener, TcpStream, Shutdown};
 use std::io::{Read, Write};
+use std::str::from_utf8;
 
 // https://thepacketgeek.com/rust/tcpstream/reading-and-writing/
 
@@ -11,8 +12,8 @@ fn handle_client(mut stream: TcpStream) {
             // echo everything!
             // remplacer le unwrap()
             stream.write(&data[0..size]).unwrap();
-            // ligne pour voir ce que le serveur reçoit et l'afficher (bug)
-            //println!("client : {:#?}", stream.read_exact(&mut data[0..size]));
+            let text = from_utf8(&data).unwrap();
+            println!("Client : {}", text);
             true
         },
         Err(_) => {

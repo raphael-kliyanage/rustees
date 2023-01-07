@@ -1,12 +1,11 @@
 use std::net::{TcpStream};
 use std::io::{Read, Write};
-use std::io;
 use std::str::from_utf8;
 
 fn main() {
     let mut message = String::new();
     println!("Saisir votre message :");
-    let mut buffer = std::io::stdin().read_line(&mut message).unwrap();
+    let buffer = std::io::stdin().read_line(&mut message).unwrap();
     println!("Votre prénom est : {}", message);
     println!("Taille du buffer à lire : {}", buffer);
     let msg_octet = message.as_bytes();
@@ -19,7 +18,7 @@ fn main() {
 
            let mut data = [0; 12]; // using 12 byte buffer
            match stream.read(&mut data) {
-               Ok(size) => {
+               Ok(_size) => {
                    if &data == msg_octet {
                        println!("Reply ok!");
                    } else {
@@ -28,11 +27,11 @@ fn main() {
                        println!("Réponse innatendu : {}", text);
                    }
                },
-               Err(e) => {
-                   println!("Aucune réponse de reçu : {}", e);
+               Err(_e) => {
+                   println!("Aucune réponse de reçu : {}", _e);
                }
             }
-        }, Err(e) => {
+        }, Err(_e) => {
             println!("Impossible de se connecter au serveur !");
         }
     }
