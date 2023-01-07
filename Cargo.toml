@@ -7,10 +7,14 @@ edition = "2021"
 
 [dependencies]
 
+# binaire pour lancer le serveur
+# cargo run --bin serveur
 [[bin]]
 name = "serveur"
 path = "src/serveur.rs"
 
+# binaire pour lancer un client
+# cargo run --bin client
 [[bin]]
 name = "client"
 path = "src/client.rs"
