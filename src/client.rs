@@ -2,6 +2,12 @@ use std::net::{TcpStream};
 use std::io::{Read, Write};
 use std::str::from_utf8;
 
+// trait pour envoyer un message
+// pub trait Message {
+//     fn saisir_message(&self) -> u8;
+//     fn envoyer_message(&self);
+// }
+
 fn main() {
     let mut message = String::new();
     println!("Saisir votre message :");
