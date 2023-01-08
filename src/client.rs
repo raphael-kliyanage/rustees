@@ -11,30 +11,32 @@ use std::str::from_utf8;
 fn main() {
     let mut message = String::new();
     println!("Saisir votre message :");
-    let buffer = std::io::stdin().read_line(&mut message).unwrap();
+    let tampon = std::io::stdin().read_line(&mut message).unwrap();
     println!("Votre prénom est : {}", message);
-    println!("Taille du buffer à lire : {}", buffer);
+    println!("Taille du tampon à lire : {}", tampon);
     let msg_octet = message.as_bytes();
 
     match TcpStream::connect("localhost:25566") {
-        Ok(mut stream) => {
+        Ok(mut socket) => {
             println!("Conneté au port 25566");
-            stream.write(msg_octet).unwrap();
+            socket.write(msg_octet).unwrap();
             println!("Message envoyé, en attente d'une réponse...");
 
-           let mut data = [0; 512]; // using 12 byte buffer
-           match stream.read(&mut data) {
+           let mut trame = [0; 512]; // mem tampon/buffer à 512 octets
+           match socket.read(&mut trame) {
                 // [bug] si le message ne fait pas 12 octets de buffer
                 // alors c'est le else qui est pris en compte
                 // mais le serveur spam le réponse
                 Ok(_size) => {
-                    if &data == msg_octet {
-                        println!("Reply ok!");
-                    } else {
-                        // remplacer le unwrap()
-                        let text = from_utf8(&data).unwrap();
-                        println!("Réponse innatendu : {}", text);
-                    }
+                    // if &trame != msg_octet {
+                    //     println!("Reply ok!");
+                    // } else {
+                    //     // remplacer le unwrap()
+                    //     let msg_serveur = from_utf8(&trame).unwrap();
+                    //     println!("Réponse innatendu : {}", msg_serveur);
+                    // }
+                    let reponse_serveur = from_utf8(&trame).unwrap();
+                    println!("Réponse serveur : {}", reponse_serveur);
                 },
                 Err(_e) => {
                     println!("Aucune réponse de reçu : {}", _e);
