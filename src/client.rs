@@ -18,18 +18,21 @@ fn main() {
 
            let mut data = [0; 512]; // using 12 byte buffer
            match stream.read(&mut data) {
-               Ok(_size) => {
-                   if &data == msg_octet {
-                       println!("Reply ok!");
-                   } else {
-                       // remplacer le unwrap()
-                       let text = from_utf8(&data).unwrap();
-                       println!("Réponse innatendu : {}", text);
-                   }
-               },
-               Err(_e) => {
-                   println!("Aucune réponse de reçu : {}", _e);
-               }
+                // [bug] si le message ne fait pas 12 octets de buffer
+                // alors c'est le else qui est pris en compte
+                // mais le serveur spam le réponse
+                Ok(_size) => {
+                    if &data == msg_octet {
+                        println!("Reply ok!");
+                    } else {
+                        // remplacer le unwrap()
+                        let text = from_utf8(&data).unwrap();
+                        println!("Réponse innatendu : {}", text);
+                    }
+                },
+                Err(_e) => {
+                    println!("Aucune réponse de reçu : {}", _e);
+                }
             }
         }, Err(_e) => {
             println!("Impossible de se connecter au serveur !");
