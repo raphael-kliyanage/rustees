@@ -6,7 +6,8 @@ use std::io::{Read, Write};
 // https://thepacketgeek.com/rust/tcpstream/reading-and-writing/
 
 fn handle_client(mut socket: TcpStream) {
-    let mut data = [0 as u8; 512]; // using 50 byte buffer
+    const BUFFER: usize = 512;  // mem tampon à 512 octets
+    let mut data = [0 as u8; BUFFER];
     while match socket.read(&mut data) {
         Ok(size) => {
             // echo everything!

@@ -9,11 +9,12 @@ use std::str::from_utf8;
 // }
 
 fn main() {
+    const BUFFER: usize = 512; // mem tampon à 512 octets
     let mut message = String::new();
     println!("Saisir votre message :");
     let tampon = std::io::stdin().read_line(&mut message).unwrap();
-    println!("Votre prénom est : {}", message);
-    println!("Taille du tampon à lire : {}", tampon);
+    println!("Votre message est : {}", message);
+    println!("Taille du message à lire : {}", tampon);
     let msg_octet = message.as_bytes();
 
     match TcpStream::connect("localhost:25566") {
@@ -22,12 +23,10 @@ fn main() {
             socket.write(msg_octet).unwrap();
             println!("Message envoyé, en attente d'une réponse...");
 
-           let mut trame = [0; 512]; // mem tampon/buffer à 512 octets
+           let mut trame = [0; BUFFER];
            match socket.read(&mut trame) {
-                // [bug] si le message ne fait pas 12 octets de buffer
-                // alors c'est le else qui est pris en compte
-                // mais le serveur spam le réponse
                 Ok(_size) => {
+                    // code non pertinent pour le projet
                     // if &trame != msg_octet {
                     //     println!("Reply ok!");
                     // } else {
