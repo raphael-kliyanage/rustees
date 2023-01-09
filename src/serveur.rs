@@ -46,10 +46,8 @@ fn main() {
             }
             Err(e) => {
                 println!("Echec de la connexion : {}", e);
-                /* connection failed */
             }
         }
     }
-    // close the socket server
     drop(listener);
 }
