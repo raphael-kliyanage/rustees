@@ -1,9 +1,10 @@
+// https://book.async.rs/tutorial/index.html
+// https://thepacketgeek.com/rust/tcpstream/reading-and-writing/
+
 use std::thread;
 use std::net::{TcpListener, TcpStream, Shutdown};
 use std::io::{Read, Write};
 // use std::str::from_utf8; // pour voir ce que le serveur reçoit
-
-// https://thepacketgeek.com/rust/tcpstream/reading-and-writing/
 
 fn handle_client(mut socket: TcpStream) {
     const BUFFER: usize = 512;  // mem tampon à 512 octets
@@ -46,10 +47,8 @@ fn main() {
             }
             Err(e) => {
                 println!("Echec de la connexion : {}", e);
-                /* connection failed */
             }
         }
     }
-    // close the socket server
     drop(listener);
 }
