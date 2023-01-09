@@ -1,3 +1,5 @@
+// https://book.async.rs/tutorial/index.html
+
 use std::net::{TcpStream};
 use std::io::{Read, Write};
 use std::str::from_utf8;
@@ -29,8 +31,8 @@ fn main() {
             socket.write(msg_octet).unwrap();
             println!("Message envoyé, en attente d'une réponse...");
 
-           let mut trame = [0; BUFFER];
-           match socket.read(&mut trame) {
+            let mut trame = [0; BUFFER];
+            match socket.read(&mut trame) {
                 Ok(_size) => {
                     // code non pertinent pour le projet
                     // if &trame != msg_octet {
