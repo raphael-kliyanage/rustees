@@ -22,14 +22,14 @@ fn saisir_message() -> String {
 
 fn main() {
     const BUFFER: usize = 512; // mem tampon à 512 octets
-    let message_client = saisir_message();
-    let msg_octet = message_client.as_bytes();
 
-    match TcpStream::connect("localhost:25566") {
+    while match TcpStream::connect("localhost:25566") {
         Ok(mut socket) => {
             println!("Conneté au port 25566");
+            let message_client = saisir_message();
+            let msg_octet = message_client.as_bytes();
             socket.write(msg_octet).unwrap();
-            println!("Message envoyé, en attente d'une réponse...");
+            println!("Message envoyé, en attente d'une réponse..."); 
 
             let mut trame = [0; BUFFER];
             match socket.read(&mut trame) {
@@ -49,9 +49,12 @@ fn main() {
                     println!("Aucune réponse de reçu : {}", _e);
                 }
             }
+            true
         }, Err(_e) => {
             println!("Impossible de se connecter au serveur !");
+            false
         }
-    }
+    } {}
+    // debug à supprimer à la fin du projet
     println!("fin");
 }
