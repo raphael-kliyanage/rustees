@@ -14,7 +14,7 @@ fn saisir_pseudo() -> String {
     let mut pseudo = String::new();
     println!("Saisir votre pseudo : ");
     let _tmp = std::io::stdin().read_line(&mut pseudo).unwrap();
-    println!("Bonjour {} ", pseudo);
+    println!("Bonjour {} !", pseudo);
 
     pseudo
 }
@@ -34,12 +34,13 @@ fn main() {
     let pseudo_client = saisir_pseudo();
     let pseudo_octet = pseudo_client.as_bytes();
 
-    while match TcpStream::connect("localhost:25566") {
-        Ok(mut socket) => {
+    let mut socket = TcpStream::connect("localhost:25566");
+    while match socket {
+        Ok(ref mut socket) => {
             println!("Conneté au port 25566");
             let message_client = saisir_message();
             let msg_octet = message_client.as_bytes();
-            let tx: Vec<u8> = [pseudo_octet, msg_octet].concat();
+            let tx: Vec<u8> = [msg_octet, b" > ", pseudo_octet].concat();
             socket.write(&tx).unwrap();
             println!("Message envoyé, en attente d'une réponse..."); 
 
@@ -62,7 +63,7 @@ fn main() {
                 }
             }
             true
-        }, Err(_e) => {
+        }, Err(ref _e) => {
             println!("Impossible de se connecter au serveur !");
             false
         }
