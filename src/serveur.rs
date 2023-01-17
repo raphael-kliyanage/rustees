@@ -31,7 +31,9 @@ fn handle_client(mut socket: TcpStream) {
 
 fn main() {
     // remplacer le unwrap()
+    let listener1 = Vec::<TcpStream>::new();
     let listener = TcpListener::bind("0.0.0.0:25566").unwrap();
+    // let listener_clone = listener.try_clone().unwrap();
     // accept connections and process them, spawning a new thread for each one
     println!("Serveur en écoute sur le port 25566");
     for socket in listener.incoming() {
@@ -40,10 +42,11 @@ fn main() {
                 // remplacer le unwrap()
                 println!("Nouvelle connexion : {}",
                     socket.peer_addr().unwrap());
-                thread::spawn(move|| {
+                /*let thread_socket = */thread::spawn(move || {
                     // connection succeeded
                     handle_client(socket)
                 });
+                // let res = thread_socket.join();
             }
             Err(e) => {
                 println!("Echec de la connexion : {}", e);
