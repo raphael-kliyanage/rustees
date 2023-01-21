@@ -42,6 +42,7 @@ fn main() {
                 // remplacer le unwrap()
                 println!("Nouvelle connexion : {}",
                     socket.peer_addr().unwrap());
+                    //listener1.push(socket);
                 /*let thread_socket = */thread::spawn(move || {
                     // connection succeeded
                     handle_client(socket)
