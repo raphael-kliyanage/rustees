@@ -31,8 +31,9 @@ fn handle_client(mut socket: TcpStream) {
 
 fn main() {
     // remplacer le unwrap()
-    let listener1 = Vec::<TcpStream>::new();
+    // let mut vec = Vec::<TcpStream>::new();
     let listener = TcpListener::bind("0.0.0.0:25566").unwrap();
+    //vec.push(listener);
     // let listener_clone = listener.try_clone().unwrap();
     // accept connections and process them, spawning a new thread for each one
     println!("Serveur en écoute sur le port 25566");

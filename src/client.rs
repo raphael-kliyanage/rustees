@@ -2,6 +2,7 @@
 
 use std::net::{TcpStream};
 use std::io::{Read, Write};
+use std::thread;
 use std::str::from_utf8;
 
 // trait pour envoyer un message
@@ -38,7 +39,9 @@ fn main() {
     while match socket {
         Ok(ref mut socket) => {
             println!("Conneté au port 25566");
-            let message_client = saisir_message();
+            let mut message_client = String::new();
+            message_client = saisir_message();
+            //let message_client = saisir_message();            
             let msg_octet = message_client.as_bytes();
             let tx: Vec<u8> = [msg_octet, b" > ", pseudo_octet].concat();
             socket.write(&tx).unwrap();
