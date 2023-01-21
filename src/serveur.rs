@@ -31,17 +31,18 @@ fn handle_client(mut socket: TcpStream) {
 
 fn main() {
     // remplacer le unwrap()
-    // let mut vec = Vec::<TcpStream>::new();
+    let mut vec_socket = Vec::<TcpStream>::new();
     let listener = TcpListener::bind("0.0.0.0:25566").unwrap();
-    //vec.push(listener);
-    // let listener_clone = listener.try_clone().unwrap();
+    //let listener_clone = listener.try_clone().unwrap();
     // accept connections and process them, spawning a new thread for each one
     println!("Serveur en écoute sur le port 25566");
     for socket in listener.incoming() {
         match socket {
             Ok(socket) => {
                 // remplacer le unwrap()
-                println!("Nouvelle connexion : {}",
+                let socket_clone = socket.try_clone().expect("Impossible de cloner");
+                vec_socket.push(socket_clone);
+                println!("Nouvelle connexion : {}", 
                     socket.peer_addr().unwrap());
                     //listener1.push(socket);
                 /*let thread_socket = */thread::spawn(move || {
