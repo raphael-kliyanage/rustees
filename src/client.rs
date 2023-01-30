@@ -1,11 +1,5 @@
 // https://book.async.rs/tutorial/index.html
 
-// use std::net::{TcpStream};
-// use std::io::{Read, Write, ErrorKind};
-// use std::sync::mpsc;
-// use mpsc::TryRecvError;
-// use std::time::Duration;
-// use std::thread;
 use age::{Recipient, DecryptError, EncryptError};
 use std::str::FromStr;
 use std::iter;
@@ -19,12 +13,6 @@ use std::{
     thread,
     time::Duration,
 };
-
-// trait pour envoyer un message
-// pub trait Message {
-//     fn saisir_message(&self) -> u8;
-//     fn envoyer_message(&self);
-// }
 
 fn sleep() {
     thread::sleep(::std::time::Duration::from_millis(100));
@@ -59,7 +47,7 @@ pub fn generation_des_cles( )-> Identity
 
 pub fn chiffrement_message(message:String,key_public:Box<dyn Recipient +Send>) -> String
 {
-    // Chiffre le message clair  en message chiffré
+    // Chiffre le message clair en message chiffré
 
         let encryptor = age::Encryptor::with_recipients(vec![key_public])
             .expect("we provided a recipient");
@@ -95,16 +83,7 @@ pub fn dechiffrement_message(message:String, key_prive:Identity) -> Option<Strin
     Some(std::str::from_utf8(&decrypted).expect("Impossible de convertir le vecteur en string").to_string())
 }
 
-
-
-
-
 fn main() {
-//    const BUFFER: usize = 512; // mem tampon à 512 octets
-//    let pseudo_client = saisir_pseudo();
-//    let pseudo_octet = pseudo_client.as_bytes();
-
-//    let mut socket = TcpStream::connect("localhost:25566");
     let mut client = TcpStream::connect("localhost:25566")
         .expect("Stream failed to connect");
     client
@@ -175,7 +154,6 @@ fn main() {
             Err(TryRecvError::Empty) => (),
             Err(TryRecvError::Disconnected) => break,
         }
-
         thread::sleep(Duration::from_millis(100));
     });
 
@@ -194,43 +172,6 @@ fn main() {
             break;
         }
     }
-    println!("Bye bye");
-//    while match socket {
-//        Ok(ref mut socket) => {
-//            println!("Conneté au port 25566");
-//            // let mut message_client = String::new();
-//            // message_client = saisir_message();
-//            //let message_client = saisir_message();
-//            // let msg_octet = message_client.as_bytes();
-//            // let tx: Vec<u8> = [msg_octet, b" > ", pseudo_octet].concat();
-//            // socket.write(&tx).unwrap();
-//            // println!("Message envoyé, en attente d'une réponse...");
-//
-//            // let mut trame = vec![0; BUFFER];
-//            match socket.read(&mut trame) {
-//                Ok(_size) => {
-//                    // code non pertinent pour le projet
-//                    // if &trame != msg_octet {
-//                    //     println!("Reply ok!");
-//                    // } else {
-//                    //     // remplacer le unwrap()
-//                    //     let msg_serveur = from_utf8(&trame).unwrap();
-//                    //     println!("Réponse innatendu : {}", msg_serveur);
-//                    // }
-//                    let rx = from_utf8(&trame).unwrap();
-//                    println!("Réponse serveur : {}", &rx);
-//                },
-//                Err(_e) => {
-//                    println!("Aucune réponse de reçu : {}", _e);
-//                }
-//            }
-//            true
-//        }, Err(ref _e) => {
-//            println!("Impossible de se connecter au serveur !");
-//            false
-//        }
-//    } {}
-    // debug à supprimer à la fin du projet
     println!("fin");
 }
 
