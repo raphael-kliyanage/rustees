@@ -21,7 +21,8 @@ fn sleep() {
 fn saisir_pseudo() -> String {
     let mut pseudo = String::new();
     println!("Saisir votre pseudo : ");
-    let _tmp = std::io::stdin().read_line(&mut pseudo).unwrap();
+    let _tmp = std::io::stdin().read_line(&mut pseudo)
+        .unwrap_or(1);
     println!("Bonjour {} !", pseudo);
 
     pseudo
@@ -30,7 +31,7 @@ fn saisir_pseudo() -> String {
 fn saisir_message() -> String {
     let mut message = String::new();
     println!("Saisir votre message : ");
-    let tampon = std::io::stdin().read_line(&mut message).unwrap();
+    let tampon = std::io::stdin().read_line(&mut message).unwrap_or(2);
     println!("Votre message est : {}", message);
     println!("Taille du message à lire : {}", tampon);
 
@@ -63,7 +64,7 @@ pub fn chiffrement_message(message:String,key_public:Box<dyn Recipient +Send>) -
 // déchiffre le message chiffré obtenu en message clair
 pub fn dechiffrement_message(message:String, key_prive:Identity) -> Option<String>
 {
-    let message = hex::decode(message).unwrap();
+    let message = hex::decode(message).unwrap_or(vec![4,0,4]);
     let decryptor = match age::Decryptor::new(&message[..]).expect("Impossible d'intialiser le Déchiffrement"){
         age::Decryptor::Recipients(d) => d,
         _ => unreachable!(),
@@ -86,6 +87,7 @@ pub fn dechiffrement_message(message:String, key_prive:Identity) -> Option<Strin
 fn main() {
     let mut client = TcpStream::connect("localhost:25566")
         .expect("Stream failed to connect");
+    
     client
         .set_nonblocking(true)
         .expect("failed to initiate non-blocking");
@@ -98,10 +100,16 @@ fn main() {
     println!("Saisir la clé publique destinataire !");
     // Stocke la clé en format string et on la converti en format Recipient
     let mut key_str = String::new();
-    std::io::stdin().read_line(&mut key_str).unwrap();
-    // enlever le /n
-    let key_str = &key_str[0..key_str.len()-1];
-    let key_dest = age::x25519::Recipient::from_str(&key_str).unwrap();
+    let mut key_dest = Err("empty");
+    // let mut length = 0;
+    while key_dest.is_err() {
+        let input = std::io::stdin().read_line(&mut key_str).unwrap_or(3);
+        // length = input.len
+        // enlever le /n
+        let key_str = &key_str[0..key_str.len()-1];
+        key_str.trim();
+        key_dest = age::x25519::Recipient::from_str(&key_str);
+    }
 
     thread::spawn(move || loop {
         const BUFF_SIZE: usize = 4096;
@@ -148,8 +156,15 @@ fn main() {
             Ok(msg) => {
                 let buff = msg.clone().into_bytes();
                 let msg_string = std::str::from_utf8(&buff).expect("Impossible de convertir le vecteur en string").to_string();
-                let message_chiffre = chiffrement_message(msg_string, Box::new(key_dest.clone()));
-                client.write_all(&message_chiffre.as_bytes()).expect("writing to socket failed");
+                match key_dest {
+                    Ok(ref key) => {
+                        let message_chiffre = chiffrement_message(msg_string, Box::new(key.clone()));
+                        client.write_all(&message_chiffre.as_bytes()).expect("writing to socket failed");
+                    },
+                    Err(e) => {
+                        println!("Erreur {}", e)
+                    }
+                }
             }
             Err(TryRecvError::Empty) => (),
             Err(TryRecvError::Disconnected) => break,
@@ -185,8 +200,7 @@ mod test
         let key = generation_des_cles();
         let message = " test le chiffement des message!".to_string();
         let message_chiffre = chiffrement_message(message.clone(),Box::new(key.to_public()));
-        let message_dechiffre = dechiffrement_message(message_chiffre, key).unwrap();
+        let message_dechiffre = dechiffrement_message(message_chiffre, key).unwrap_or("error".to_string());
         assert_eq!(message , message_dechiffre);
     }
-
 }
