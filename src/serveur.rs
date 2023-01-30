@@ -42,7 +42,7 @@ fn sleep() {
 // }
 
 fn main() {
-    const TAILLE_MSG: usize = 4096;  // mem tampon à 512 octets
+    const TAILLE_MSG: usize = 4096;  // mem tampon à 4096 octets
     let server = TcpListener::bind("localhost:25566")
         .expect("Listener failed to bind");
     server
