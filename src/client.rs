@@ -121,11 +121,13 @@ fn main() {
     println!("Saisir la clé publique destinataire !");
     // Stocke la clé en format string et on la converti en format Recipient
     let mut key_str = String::new();
-    std::io::stdin().read_line(&mut key_str).unwrap_or(3);
-    // enlever le /n
-    let key_str = &key_str[0..key_str.len()-1];
-    let key_dest = age::x25519::Recipient::from_str(&key_str)
-        .unwrap();
+    //while key_str.kind() {
+        std::io::stdin().read_line(&mut key_str).unwrap_or(3);
+        // enlever le /n
+        let key_str = &key_str[0..key_str.len()-1];
+        key_str.trim();
+        let key_dest = age::x25519::Recipient::from_str(&key_str).unwrap();
+    //}
 
     thread::spawn(move || loop {
         const BUFF_SIZE: usize = 4096;
