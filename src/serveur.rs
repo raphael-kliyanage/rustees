@@ -31,7 +31,7 @@ fn sleep() {
 //                 true
 //             },
 //             Err(_) => {
-//                 println!("Une erreur est survenue, déconnexion du client : {}", 
+//                 println!("Une erreur est survenue, déconnexion du client : {}",
 //                     socket[n].peer_addr().unwrap());
 //                 // remplacer le unwrap()
 //                 socket[n].shutdown(Shutdown::Both).unwrap();
@@ -42,7 +42,7 @@ fn sleep() {
 // }
 
 fn main() {
-    const TAILLE_MSG: usize = 512;  // mem tampon à 512 octets
+    const TAILLE_MSG: usize = 4096;  // mem tampon à 512 octets
     let server = TcpListener::bind("localhost:25566")
         .expect("Listener failed to bind");
     server
@@ -59,21 +59,33 @@ fn main() {
             clients.push(socket.try_clone().expect("failed to clone client"));
 
             thread::spawn(move || loop {
+                // Buffer temporaire (morceaux du message)
                 let mut buff = vec![0; TAILLE_MSG];
-
-                match socket.read_exact(&mut buff) {
-                    Ok(_) => {
-                        let msg = buff.into_iter().take_while(|&x| x != 0).collect::<Vec<_>>();
-                        let msg = String::from_utf8(msg).expect("invalid utf8 message");
-
-                        println!("{} {:?}", addr, msg);
-                        tx.send(msg).expect("failed to send message to rx");
+                // Message chiffré final
+                let mut encrypted_msg: Vec<u8> = Vec::new();
+                let mut skip: bool = false;
+                // Lire les paquets tant qu'on a pas le message complet
+                loop {
+                    match socket.read(&mut buff) {
+                        Ok(msg_len) => {
+                            if msg_len == TAILLE_MSG {
+                                encrypted_msg.append(&mut buff);
+                            } else if msg_len != 0 {
+                                encrypted_msg.append(&mut buff[..msg_len].to_vec());
+                                break;
+                            } else {
+                                skip = true;
+                                break;
+                            }
+                        },
+                        Err(_) => break
                     }
-                    Err(ref err) if err.kind() == ErrorKind::WouldBlock => (),
-                    Err(_) => {
-                        println!("Closing connection with: {}", addr);
-                        break;
-                    }
+                }
+                if skip == false {
+                    let msg = std::str::from_utf8(&encrypted_msg).expect("Impossible de convertir le vecteur en string").to_string();
+                    println!("Rcv <== {:?}", socket.peer_addr());
+                    println!("{} {:?} len={}", addr, msg, msg.len());
+                    tx.send(msg).expect("failed to send message to rx");
                 }
                 sleep();
             });
@@ -85,7 +97,7 @@ fn main() {
                 .filter_map(|mut client| {
                     let mut buff = msg.clone().into_bytes();
                     buff.resize(TAILLE_MSG, 0);
-
+                    println!("Send ==> {:?}", client.peer_addr());
                     client.write_all(&buff).map(|_| client).ok()
                 })
                 .collect::<Vec<_>>();
@@ -106,7 +118,7 @@ fn main() {
 //                let socket_clone = socket.try_clone().expect("Impossible de cloner");
 //                let mut vec_socket = Vec::<TcpStream>::new();
 //                vec_socket.push(socket_clone);
-//                println!("Nouvelle connexion : {}", 
+//                println!("Nouvelle connexion : {}",
 //                    socket.peer_addr().unwrap());
 //                    //listener1.push(socket);
 //                /*let thread_socket = */thread::spawn(move || {
