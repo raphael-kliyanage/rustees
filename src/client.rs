@@ -121,13 +121,16 @@ fn main() {
     println!("Saisir la clé publique destinataire !");
     // Stocke la clé en format string et on la converti en format Recipient
     let mut key_str = String::new();
-    //while key_str.kind() {
-        std::io::stdin().read_line(&mut key_str).unwrap_or(3);
+    let mut key_dest = Err("empty");
+    // let mut length = 0;
+    while key_dest.is_err() {
+        let input = std::io::stdin().read_line(&mut key_str).unwrap_or(3);
+        // length = input.len
         // enlever le /n
         let key_str = &key_str[0..key_str.len()-1];
         key_str.trim();
-        let key_dest = age::x25519::Recipient::from_str(&key_str).unwrap();
-    //}
+        key_dest = age::x25519::Recipient::from_str(&key_str);
+    }
 
     thread::spawn(move || loop {
         const BUFF_SIZE: usize = 4096;
@@ -174,8 +177,15 @@ fn main() {
             Ok(msg) => {
                 let buff = msg.clone().into_bytes();
                 let msg_string = std::str::from_utf8(&buff).expect("Impossible de convertir le vecteur en string").to_string();
-                let message_chiffre = chiffrement_message(msg_string, Box::new(key_dest.clone()));
-                client.write_all(&message_chiffre.as_bytes()).expect("writing to socket failed");
+                match key_dest {
+                    Ok(ref key) => {
+                        let message_chiffre = chiffrement_message(msg_string, Box::new(key.clone()));
+                        client.write_all(&message_chiffre.as_bytes()).expect("writing to socket failed");
+                    },
+                    Err(e) => {
+                        println!("Erreur {}", e)
+                    }
+                }
             }
             Err(TryRecvError::Empty) => (),
             Err(TryRecvError::Disconnected) => break,
