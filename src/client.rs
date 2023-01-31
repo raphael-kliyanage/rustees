@@ -97,18 +97,21 @@ fn main() {
     // L'affichage de la clé publique de l'utilisateur !
     println!("Voici la clé publique {} ",key.to_public());
     // Récuperation de la clé destinataire
-    println!("Saisir la clé publique destinataire !");
+    //println!("Saisir la clé publique destinataire !");
     // Stocke la clé en format string et on la converti en format Recipient
     let mut key_str = String::new();
     let mut key_dest = Err("empty");
-    // let mut length = 0;
-    while key_dest.is_err() {
+    let mut length = 0;
+    while key_dest.is_err() || length != 64 {
+        println!("Saisir la clé publique destinataire !");
         let input = std::io::stdin().read_line(&mut key_str).unwrap_or(3);
-        // length = input.len
+        println!("input {}", input);
+        length = input;
         // enlever le /n
         let key_str = &key_str[0..key_str.len()-1];
         key_str.trim();
         key_dest = age::x25519::Recipient::from_str(&key_str);
+        println!("key dest = {}", key_str);
     }
 
     thread::spawn(move || loop {
