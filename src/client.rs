@@ -109,7 +109,6 @@ fn main() {
         length = input;
         // enlever le /n
         let key_str = &key_str[0..key_str.len()-1];
-        key_str.trim();
         key_dest = age::x25519::Recipient::from_str(&key_str);
         println!("key dest = {}", key_str);
     }
@@ -185,7 +184,7 @@ fn main() {
             .read_line(&mut buff)
             .expect("reading from stdin failed");
 
-        let msg = buff.trim().to_string();
+        let mut msg = buff.trim().to_string();
         if msg == ":quit" || tx.send(msg).is_err() {
             break;
         }
