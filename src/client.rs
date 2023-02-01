@@ -4,8 +4,9 @@
 // use std::io::{Read, Write, ErrorKind};
 // use std::sync::mpsc;
 // use mpsc::TryRecvError;
- use std::time::Duration as Dur;
 // use std::thread;
+use thiserror::Error;
+use std::time::Duration as Dur;
 use std::sync::{Arc, atomic::{AtomicBool, Ordering}};
 use std::process::exit;
 use std::path::Path;
@@ -33,6 +34,18 @@ use std::{
 // }
 
 
+// gestion propore des erreurs !
+
+#[derive(Error, Debug)]
+pub enum ClientError 
+{
+    #[error("impossible de trouver la bonne clé ! ")]
+    NoMatchingKey,
+    #[error("Impossible de déchiffrer le message ! ")]
+    CantDecrypte,
+    #[error("Impossible de chiffrer le message !")]
+    CantEncrypte,
+}
 
 // Stocke les  types messages recu et envoyes
 
@@ -126,28 +139,47 @@ pub fn generation_des_cles( )-> Identity
     key
 }
 
-pub fn chiffrement_message(message:String,key_public:Box<dyn Recipient +Send>) -> String
+pub fn chiffrement_message(message:String,key_public:Box<dyn Recipient +Send>) -> Result<String,ClientError>
 {
     // Chiffre le message clair  en message chiffré
 
-        let encryptor = age::Encryptor::with_recipients(vec![key_public])
-            .expect("we provided a recipient");
+        let Some(encryptor) = age::Encryptor::with_recipients(vec![key_public])
+        else {
+            return Err((ClientError::CantEncrypte))
+        };
+            
 
         let mut encrypted = vec![];
-        let mut writer = encryptor.wrap_output(&mut encrypted).expect("Chiffrement Impossible");
-        writer.write_all(message.as_bytes()).expect("Impossible d'ecrire le message !");
-        writer.finish().expect("Impossible de finaliser le Chiffrement");
+        let Ok (mut writer) = encryptor.wrap_output(&mut encrypted)
+        else  {
+            return Err((ClientError::CantEncrypte))
+        };
 
-        hex::encode(encrypted)
+        if writer.write_all(message.as_bytes()).is_err() {
+            return Err((ClientError::CantEncrypte))
+        }
+        if writer.finish().is_err() {
+            return Err((ClientError::CantEncrypte))
+
+        }
+
+        Ok(hex::encode(encrypted))
+
 }
 
 // déchiffre le message chiffré obtenu en message clair
-pub fn dechiffrement_message(message:String, key_prive:Identity) -> Option<String>
+pub fn dechiffrement_message(message:String, key_prive:Identity) -> Result<String,ClientError>
 {
     let message = hex::decode(message).unwrap();
-    let decryptor = match age::Decryptor::new(&message[..]).expect("Impossible d'intialiser le Déchiffrement"){
-        age::Decryptor::Recipients(d) => d,
-        _ => unreachable!(),
+    let decryptor = match age::Decryptor::new(&message[..])
+    {
+        Ok(decrypte) => {
+            match decrypte {
+                age::Decryptor::Recipients(d) => d,
+                age::Decryptor::Passphrase(_) => unreachable!(),
+            }
+        },
+        Err(_) => return Err(ClientError::CantDecrypte),
     };
 
     let mut decrypted = vec![];
@@ -155,13 +187,23 @@ pub fn dechiffrement_message(message:String, key_prive:Identity) -> Option<Strin
         Ok(data) => data,
         Err(e) => {
             match e {
-                DecryptError::NoMatchingKeys => return None,
+                DecryptError::NoMatchingKeys => return Err(ClientError::NoMatchingKey),
                 _ => panic!("{}", e)
             }
         }
     };
-    reader.read_to_end(&mut decrypted).expect("Impossible de lire le contenu du message! ");
-    Some(std::str::from_utf8(&decrypted).expect("Impossible de convertir le vecteur en string").to_string())
+    if reader.read_to_end(&mut decrypted).is_err() 
+    {
+        return Err(ClientError::CantDecrypte)
+    }
+
+
+     match  std::str::from_utf8(&decrypted) 
+     {
+        Ok(msg) => Ok(msg.to_string()),
+        Err(_) => Err(ClientError::CantDecrypte),
+    }
+    
 }
 
 
@@ -231,7 +273,7 @@ fn main() {
         loop  {
             if stop_db_clone.load(Ordering::Relaxed) == true {
                 // Save server database
-               match  enregisrtre_message(result_bdd, "bbd.json") {
+               match  enregisrtre_message(result_bdd, "bdd.json") {
                 Some(err) => {
                     println!("Err:{}" , err);
                     exit(1);
@@ -277,14 +319,30 @@ fn main() {
                     .trim_matches(char::from(0))
                     .to_string();
                 match dechiffrement_message(msg,key.clone()) {
-                    Some(msg) =>
+                    Ok(msg) =>
                     {
                         result_bdd.messages.push(
                             (msg.clone() , TypeDeMessage::MessageRecu)
                         );
                         println!("message recv {:?}", msg);
                     },
-                    None => ()
+                    Err(erreur) => 
+                    {
+                        match erreur {
+                            ClientError::NoMatchingKey => (),
+                            ClientError::CantDecrypte => {
+                                println!("{}",erreur);
+                                exit(1);
+                            }
+                            ClientError::CantEncrypte => 
+                            {
+                                println!("{}",erreur);
+                                exit(1);
+                            }
+
+                        }
+
+                    }
                 }
             }
 
@@ -296,7 +354,17 @@ fn main() {
                     result_bdd.messages.push(
                         (msg_string.clone(), TypeDeMessage::MessageEnvoye)
                     );
-                    let message_chiffre = chiffrement_message(msg_string, Box::new(key_dest.clone()));
+                    let message_chiffre =   match chiffrement_message(msg_string, Box::new(key_dest.clone())) 
+                    {
+                        Ok(msg) => msg,
+                        Err(erreur) => 
+                        {
+                            println!("{}",erreur);
+                            exit(1);
+
+                        }
+                    
+                    };
                     client.write_all(&message_chiffre.as_bytes()).expect("writing to socket failed");
                 }
                 Err(TryRecvError::Empty) => (),
@@ -372,7 +440,13 @@ mod test
     {
         let key = generation_des_cles();
         let message = " test le chiffement des message!".to_string();
-        let message_chiffre = chiffrement_message(message.clone(),Box::new(key.to_public()));
+        let message_chiffre = match chiffrement_message(message.clone(),Box::new(key.to_public())) {
+            Ok(msg) => msg,
+            Err(erreur) => {
+                println!("{}",erreur);
+                exit(1);
+            },
+        };
         let message_dechiffre = dechiffrement_message(message_chiffre, key).unwrap();
         assert_eq!(message , message_dechiffre);
     }
