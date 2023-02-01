@@ -48,15 +48,23 @@ pub fn chiffrement_message(message:String,key_public:Box<dyn Recipient +Send>) -
 {
     // Chiffre le message clair en message chiffré
 
-        let encryptor = age::Encryptor::with_recipients(vec![key_public])
-            .expect("we provided a recipient");
+        match age::Encryptor::with_recipients(vec![key_public]) {
+            Some(encryptor) => {
+                //let encryptor = age::Encryptor::with_recipients(vec![key_public]);
+                let mut encrypted = vec![];
+                let mut writer = encryptor.wrap_output(&mut encrypted).expect("Chiffrement Impossible");
+                writer.write_all(message.as_bytes()).expect("Impossible d'ecrire le message !");
+                writer.finish().expect("Impossible de finaliser le Chiffrement");
 
-        let mut encrypted = vec![];
-        let mut writer = encryptor.wrap_output(&mut encrypted).expect("Chiffrement Impossible");
-        writer.write_all(message.as_bytes()).expect("Impossible d'ecrire le message !");
-        writer.finish().expect("Impossible de finaliser le Chiffrement");
-
-        hex::encode(encrypted)
+                hex::encode(encrypted)
+            },
+            None => {
+                println!("Erreur lors du chiffrement");
+                let string = String::from("erreur");
+                string
+            }
+        }
+            //.expect("we provided a recipient");
 }
 
 // déchiffre le message chiffré obtenu en message clair
