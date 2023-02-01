@@ -4,16 +4,22 @@
 // use std::io::{Read, Write, ErrorKind};
 // use std::sync::mpsc;
 // use mpsc::TryRecvError;
-// use std::time::Duration;
+ use std::time::Duration as Dur;
 // use std::thread;
-use age::{Recipient, DecryptError, EncryptError};
+use std::sync::{Arc, atomic::{AtomicBool, Ordering}};
+use std::process::exit;
+use std::path::Path;
+use serde::{Deserialize, Serialize};
+use serde_json;
+use age::{Recipient, DecryptError};
 use std::str::FromStr;
+use std::fs::File;
 use std::iter;
 use mpsc::TryRecvError;
 use age;
 use age::x25519::Identity;
 use std::{
-    io::{self, ErrorKind, Read, Write},
+    io::{self, Read, Write},
     net::TcpStream,
     sync::mpsc,
     thread,
@@ -25,6 +31,69 @@ use std::{
 //     fn saisir_message(&self) -> u8;
 //     fn envoyer_message(&self);
 // }
+
+
+
+// Stocke les  types messages recu et envoyes
+
+#[derive(Serialize, Deserialize)]
+pub enum TypeDeMessage
+{
+ MessageEnvoye,
+ MessageRecu,
+
+}
+
+// la base de donnée stocké dans le JSON
+#[derive(Serialize, Deserialize)]
+
+ pub struct BaseDeDonneesJson {
+     messages:Vec<(String , TypeDeMessage)>
+ }
+
+// lire le fichier  qui contient  les message et le cree la de donneé
+pub fn recupere_message(fichier : &str) -> Result<BaseDeDonneesJson, String>
+{
+    match  File::open(fichier) {
+        Ok(fichier)=>{
+            match serde_json::from_reader(fichier) {
+                Ok(bdd)=> {
+                    return Ok(bdd);
+                },
+                Err(_)=> {
+                    return Err(String::from("Impossible de déserialiser le fichier !"));
+                }
+            }
+        },
+        Err(_)=> {
+            return Err(String::from(" Impossible de lire le fichier"));
+        }
+    }
+}
+
+// enregistre  le message et le stocke dans le fichier JSON
+pub fn enregisrtre_message(base_de_donne: BaseDeDonneesJson, fichier : &str) -> Option<String>
+{
+    match File::create(fichier)
+    {
+        Ok(fichier_ecriture) => {
+            match serde_json::to_writer(fichier_ecriture,&base_de_donne)
+             {
+                 Ok(_) =>  {
+                     return None;
+                 },
+                 Err(_)=> {
+                     return Some(String::from("Impossible de sérialiser la base de donnée ! "));
+                 }
+            }
+        },
+        Err(_) =>
+        {
+             return Some(String::from("Impossible d'ecrire le  fichier ! "));
+        }
+    }
+}
+
 
 fn sleep() {
     thread::sleep(::std::time::Duration::from_millis(100));
@@ -97,14 +166,8 @@ pub fn dechiffrement_message(message:String, key_prive:Identity) -> Option<Strin
 
 
 
-
-
 fn main() {
-//    const BUFFER: usize = 512; // mem tampon à 512 octets
-//    let pseudo_client = saisir_pseudo();
-//    let pseudo_octet = pseudo_client.as_bytes();
 
-//    let mut socket = TcpStream::connect("localhost:25566");
     let mut client = TcpStream::connect("localhost:25566")
         .expect("Stream failed to connect");
     client
@@ -123,64 +186,128 @@ fn main() {
     // enlever le /n
     let key_str = &key_str[0..key_str.len()-1];
     let key_dest = age::x25519::Recipient::from_str(&key_str).unwrap();
+    let stop_db = Arc::new(AtomicBool::new(false));
+    let stop_db_clone = stop_db.clone();
 
-    thread::spawn(move || loop {
-        const BUFF_SIZE: usize = 4096;
-        // Buffer temporaire (morceaux du message)
-        let mut buff = vec![0; BUFF_SIZE];
-        // Message chiffré final
-        let mut encrypted_msg: Vec<u8> = Vec::new();
-        let mut skip: bool = true;
-        // Lire les paquets tant qu'on a pas le message complet
-        loop {
-            match client.read(&mut buff) {
-                Ok(msg_len) => {
-                    if msg_len == BUFF_SIZE {
-                        encrypted_msg.append(&mut buff);
-                        skip = false;
-                        break;
-                    } else if msg_len != 0 {
-                        encrypted_msg.append(&mut buff[..msg_len].to_vec());
-                        skip = false;
-                        break;
-                    } else {
-                        break;
+
+
+
+    thread::spawn(move ||  {
+        // Stocke le resulat dans la var result_bdd
+        let  mut result_bdd = match Path::new("bdd.json").exists()
+        {
+            true =>  {
+                match recupere_message("bdd.json")
+                {
+                    Ok(bdd)=> bdd,
+                    Err(err) => {
+                        println!("Err: {} " ,err );
+                        exit(1);
                     }
+
+                }
+            },
+            false => {
+                 BaseDeDonneesJson {
+                     messages:Vec::<(String , TypeDeMessage)>::new()
+                }
+            }
+
+        };
+
+        // affichage des message a partir de la base de donnée
+        for (message, type_msg) in &result_bdd.messages
+        {
+            match  type_msg {
+                TypeDeMessage::MessageEnvoye => {
+                    println!("message envoyé ==>  {} ", message);
                 },
-                Err(_) => break
+                TypeDeMessage::MessageRecu => {
+                    println!("message recu <==  {}",message);
+                }
             }
         }
 
-        // Lancement du déchiffrement du message
-        if skip == false {
-            let msg = std::str::from_utf8(&encrypted_msg)
-                .expect("Impossible de convertir le vecteur en string")
-                .to_string()
-                .trim_matches(char::from(0))
-                .to_string();
-            match dechiffrement_message(msg,key.clone()) {
-                Some(msg) => println!("message recv {:?}", msg),
-                None => ()
+        loop  {
+            if stop_db_clone.load(Ordering::Relaxed) == true {
+                // Save server database
+               match  enregisrtre_message(result_bdd, "bbd.json") {
+                Some(err) => {
+                    println!("Err:{}" , err);
+                    exit(1);
+                },
+                None => exit(0),
+                
             }
-        }
-
-        // Chiffre et envoie le message au serveur
-        match rx.try_recv() {
-            Ok(msg) => {
-                let buff = msg.clone().into_bytes();
-                let msg_string = std::str::from_utf8(&buff).expect("Impossible de convertir le vecteur en string").to_string();
-                let message_chiffre = chiffrement_message(msg_string, Box::new(key_dest.clone()));
-                client.write_all(&message_chiffre.as_bytes()).expect("writing to socket failed");
+            
+                
             }
-            Err(TryRecvError::Empty) => (),
-            Err(TryRecvError::Disconnected) => break,
-        }
 
-        thread::sleep(Duration::from_millis(100));
-    });
+            const BUFF_SIZE: usize = 4096;
+            // Buffer temporaire (morceaux du message)
+            let mut buff = vec![0; BUFF_SIZE];
+            // Message chiffré final
+            let mut encrypted_msg: Vec<u8> = Vec::new();
+            let mut skip: bool = true;
+            // Lire les paquets tant qu'on a pas le message complet
+            loop {
+                match client.read(&mut buff) {
+                    Ok(msg_len) => {
+                        if msg_len == BUFF_SIZE {
+                            encrypted_msg.append(&mut buff);
+                            skip = false;
+                            break;
+                        } else if msg_len != 0 {
+                            encrypted_msg.append(&mut buff[..msg_len].to_vec());
+                            skip = false;
+                            break;
+                        } else {
+                            break;
+                        }
+                    },
+                    Err(_) => break
+                }
+            }
+
+            // Lancement du déchiffrement du message
+            if skip == false {
+                let msg = std::str::from_utf8(&encrypted_msg)
+                    .expect("Impossible de convertir le vecteur en string")
+                    .to_string()
+                    .trim_matches(char::from(0))
+                    .to_string();
+                match dechiffrement_message(msg,key.clone()) {
+                    Some(msg) =>
+                    {
+                        result_bdd.messages.push(
+                            (msg.clone() , TypeDeMessage::MessageRecu)
+                        );
+                        println!("message recv {:?}", msg);
+                    },
+                    None => ()
+                }
+            }
+
+            // Chiffre et envoie le message au serveur
+            match rx.try_recv() {
+                Ok(msg) => {
+                    let buff = msg.clone().into_bytes();
+                    let msg_string = std::str::from_utf8(&buff).expect("Impossible de convertir le vecteur en string").to_string();
+                    result_bdd.messages.push(
+                        (msg_string.clone(), TypeDeMessage::MessageEnvoye)
+                    );
+                    let message_chiffre = chiffrement_message(msg_string, Box::new(key_dest.clone()));
+                    client.write_all(&message_chiffre.as_bytes()).expect("writing to socket failed");
+                }
+                Err(TryRecvError::Empty) => (),
+                Err(TryRecvError::Disconnected) => break,
+            }
+
+            thread::sleep(Duration::from_millis(100));
+    }});
 
 
-    let mut pseudo_client = saisir_pseudo();
+    let pseudo_client = saisir_pseudo();
     println!("{} > ", pseudo_client);
     pseudo_client.as_bytes();
     loop {
@@ -191,6 +318,8 @@ fn main() {
 
         let msg = buff.trim().to_string();
         if msg == ":quit" || tx.send(msg).is_err() {
+            stop_db.store(true, Ordering::Relaxed);
+            thread::sleep(Dur::from_secs(2));
             break;
         }
     }

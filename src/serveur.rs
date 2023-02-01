@@ -5,8 +5,9 @@
 //use std::net::{TcpListener, TcpStream, Shutdown};
 //use std::io::{Read, Write};
 // use std::str::from_utf8; // pour voir ce que le serveur reçoit
+
 use std::{
-    io::{ErrorKind, Read, Write},
+    io::{ Read, Write},
     net::TcpListener,
     sync::mpsc,
     thread,
