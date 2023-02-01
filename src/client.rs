@@ -28,15 +28,15 @@ fn saisir_pseudo() -> String {
     pseudo
 }
 
-fn saisir_message() -> String {
-    let mut message = String::new();
-    println!("Saisir votre message : ");
-    let tampon = std::io::stdin().read_line(&mut message).unwrap_or(2);
-    println!("Votre message est : {}", message);
-    println!("Taille du message à lire : {}", tampon);
-
-    message
-}
+// fn saisir_message() -> String {
+//     let mut message = String::new();
+//     println!("Saisir votre message : ");
+//     let tampon = std::io::stdin().read_line(&mut message).unwrap_or(2);
+//     println!("Votre message est : {}", message);
+//     println!("Taille du message à lire : {}", tampon);
+// 
+//     message
+// }
 
 
 
@@ -172,11 +172,11 @@ fn main() {
             Err(TryRecvError::Empty) => (),
             Err(TryRecvError::Disconnected) => break,
         }
-        thread::sleep(Duration::from_millis(100));
+        sleep();
     });
 
 
-    let mut pseudo_client = saisir_pseudo();
+    let pseudo_client = saisir_pseudo();
     println!("{} > ", pseudo_client);
     pseudo_client.as_bytes();
     loop {
