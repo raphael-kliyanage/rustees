@@ -1,17 +1,15 @@
 // https://book.async.rs/tutorial/index.html
 
-use age::{Recipient, DecryptError, EncryptError};
-use std::str::FromStr;
-use std::iter;
+use age::{Recipient, DecryptError, EncryptError, x25519::Identity};
 use mpsc::TryRecvError;
-use age;
-use age::x25519::Identity;
 use std::{
     io::{self, ErrorKind, Read, Write},
     net::TcpStream,
     sync::mpsc,
     thread,
     time::Duration,
+    str::FromStr,
+    iter,
 };
 
 fn sleep() {
