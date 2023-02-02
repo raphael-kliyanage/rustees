@@ -145,21 +145,21 @@ pub fn chiffrement_message(message:String,key_public:Box<dyn Recipient +Send>) -
 
         let Some(encryptor) = age::Encryptor::with_recipients(vec![key_public])
         else {
-            return Err((ClientError::CantEncrypte))
+            return Err(ClientError::CantEncrypte)
         };
             
 
         let mut encrypted = vec![];
         let Ok (mut writer) = encryptor.wrap_output(&mut encrypted)
         else  {
-            return Err((ClientError::CantEncrypte))
+            return Err(ClientError::CantEncrypte)
         };
 
         if writer.write_all(message.as_bytes()).is_err() {
-            return Err((ClientError::CantEncrypte))
+            return Err(ClientError::CantEncrypte)
         }
         if writer.finish().is_err() {
-            return Err((ClientError::CantEncrypte))
+            return Err(ClientError::CantEncrypte)
 
         }
 
@@ -350,6 +350,7 @@ fn main() {
             match rx.try_recv() {
                 Ok(msg) => {
                     let buff = msg.clone().into_bytes();
+                    //Convertir le vecteur en format string pour le chiffrement !!
                     let msg_string = std::str::from_utf8(&buff).expect("Impossible de convertir le vecteur en string").to_string();
                     result_bdd.messages.push(
                         (msg_string.clone(), TypeDeMessage::MessageEnvoye)
