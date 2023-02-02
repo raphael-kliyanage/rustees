@@ -1,5 +1,3 @@
-// https://book.async.rs/tutorial/index.html
-
 use age::{Recipient, DecryptError, EncryptError, x25519::Identity};
 use mpsc::TryRecvError;
 use std::{
@@ -12,10 +10,12 @@ use std::{
     iter,
 };
 
+// fonction pour créer une pause pour les threads
 fn sleep() {
     thread::sleep(::std::time::Duration::from_millis(100));
 }
 
+// saisie d'un pseudonyme
 fn saisir_pseudo() -> String {
     let mut pseudo = String::new();
     println!("Saisir votre pseudo : ");
@@ -26,17 +26,13 @@ fn saisir_pseudo() -> String {
     pseudo
 }
 
+// saisie d'un message à envoyer
 fn saisir_message() -> String {
      let mut message = String::new();
-     //println!("Saisir votre message : ");
      let tampon = std::io::stdin().read_line(&mut message).unwrap_or(2);
-     //println!("Votre message est : {}", message);
-     //println!("Taille du message à lire : {}", tampon);
  
      message
 }
-
-
 
 pub fn generation_des_cles( )-> Identity
 {
@@ -47,7 +43,6 @@ pub fn generation_des_cles( )-> Identity
 pub fn chiffrement_message(message:String,key_public:Box<dyn Recipient +Send>) -> String
 {
     // Chiffre le message clair en message chiffré
-    
     match age::Encryptor::with_recipients(vec![key_public]) {
         Some(encryptor) => {
             let mut encrypted = vec![];
@@ -87,7 +82,7 @@ pub fn chiffrement_message(message:String,key_public:Box<dyn Recipient +Send>) -
 pub fn dechiffrement_message(message:String, key_prive:Identity) -> Option<String>
 {
     let message = hex::decode(message).unwrap_or(vec![4,0,4]);
-    let decryptor = match age::Decryptor::new(&message[..]).expect("Impossible d'intialiser le Déchiffrement"){
+    let decryptor = match age::Decryptor::new(&message[..]).expect("Impossible d'intialiser le Déchiffrement") {
         age::Decryptor::Recipients(d) => d,
         _ => unreachable!(),
     };
@@ -133,6 +128,7 @@ fn main() -> std::io::Result<()> {
         println!("key dest = {}", key_str);
     }
 
+    // ajout d'un thread pour transmettre les sockets
     thread::spawn(move || loop {
         const BUFF_SIZE: usize = 4096;
         // Buffer temporaire (morceaux du message)
@@ -194,21 +190,24 @@ fn main() -> std::io::Result<()> {
         sleep();
     });
 
-
+    // saisie d'un pseudo
     let pseudo_client = saisir_pseudo();
     println!("{} > ", pseudo_client);
     pseudo_client.as_bytes();
     loop {
+        // saisir un message en boucle dans le thread principal
         let mut buff = String::new();
         buff = saisir_message();
 
         let mut msg = buff.trim().to_string();
+        // pour quitter proprement le programme ':quit'
         if msg == ":quit" || tx.send(msg).is_err() {
             break;
         }
     }
     println!("fin");
 
+    // nécessaire pour utiliser ? (propagation d'erreur)
     Ok(())
 }
 
