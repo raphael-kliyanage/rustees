@@ -50,15 +50,11 @@ pub fn chiffrement_message(message:String,key_public:Box<dyn Recipient +Send>) -
     
     match age::Encryptor::with_recipients(vec![key_public]) {
         Some(encryptor) => {
-            //let encryptor = age::Encryptor::with_recipients(vec![key_public]);
             let mut encrypted = vec![];
-            //let mut writer = encryptor.wrap_output(&mut encrypted).expect("Chiffrement Impossible");
             match encryptor.wrap_output(&mut encrypted) {
                 Ok(mut writer) => {
-                    //writer.write_all(message.as_bytes()).expect("Impossible d'ecrire le message !");
                     match writer.write_all(message.as_bytes()) {
                         Ok(writer1) => {
-                            //writer.finish().expect("Impossible de finaliser le Chiffrement");
                             match writer.finish() {
                                 Ok(result) => {
                                     hex::encode(result);
@@ -72,14 +68,11 @@ pub fn chiffrement_message(message:String,key_public:Box<dyn Recipient +Send>) -
                             println!("Chiffrement impossible : {}", e);
                         }
                     }
-                    //hex::encode(encrypted)
                 },
                 Err(e) => {
                     println!("Chiffrement impossible : {}", e);
                 }
             }
-            //writer.write_all(message.as_bytes()).expect("Impossible d'ecrire le message !");
-            //writer.finish().expect("Impossible de finaliser le Chiffrement");
             hex::encode(encrypted)
         },
         None => {
@@ -88,7 +81,6 @@ pub fn chiffrement_message(message:String,key_public:Box<dyn Recipient +Send>) -
             string
         }
     }
-            //.expect("we provided a recipient");
 }
 
 // déchiffre le message chiffré obtenu en message clair
@@ -114,13 +106,10 @@ pub fn dechiffrement_message(message:String, key_prive:Identity) -> Option<Strin
     Some(std::str::from_utf8(&decrypted).expect("Impossible de convertir le vecteur en string").to_string())
 }
 
-fn main() {
-    let mut client = TcpStream::connect("localhost:25566")
-        .expect("Stream failed to connect");
+fn main() -> std::io::Result<()> {
+    let mut client = TcpStream::connect("localhost:25566")?;
     
-    client
-        .set_nonblocking(true)
-        .expect("failed to initiate non-blocking");
+    client.set_nonblocking(true)?;
 
     let (tx, rx) = mpsc::channel::<String>();
     let key = generation_des_cles();
@@ -210,10 +199,6 @@ fn main() {
     println!("{} > ", pseudo_client);
     pseudo_client.as_bytes();
     loop {
-        //let mut buff = String::new();
-        //io::stdin()
-        //    .read_line(&mut buff)
-        //    .expect("reading from stdin failed");
         let mut buff = String::new();
         buff = saisir_message();
 
@@ -223,6 +208,8 @@ fn main() {
         }
     }
     println!("fin");
+
+    Ok(())
 }
 
 #[cfg(test)]

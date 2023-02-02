@@ -12,13 +12,11 @@ fn sleep() {
     thread::sleep(::std::time::Duration::from_millis(100));
 }
 
-fn main() {
+fn main() -> std::io::Result<()> {
     const TAILLE_MSG: usize = 4096;  // mem tampon à 4096 octets
-    let server = TcpListener::bind("localhost:25566")
-        .expect("Listener failed to bind");
+    let server = TcpListener::bind("localhost:25566")?;
     server
-        .set_nonblocking(true)
-        .expect("failed to initialize non-blocking");
+        .set_nonblocking(true)?;
 
     let mut clients = vec![];
     let (tx, rx) = mpsc::channel::<String>();
@@ -27,7 +25,7 @@ fn main() {
             println!("Client {} connected", addr);
 
             let tx = tx.clone();
-            clients.push(socket.try_clone().expect("failed to clone client"));
+            clients.push(socket.try_clone()?);
 
             thread::spawn(move || loop {
                 // Buffer temporaire (morceaux du message)
@@ -76,4 +74,5 @@ fn main() {
 
         sleep();
     }
+    Ok(())
 }
