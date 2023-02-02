@@ -1,5 +1,4 @@
 use thiserror::Error;
-use std::time::Duration as Dur;
 use std::sync::{Arc, atomic::{AtomicBool, Ordering}};
 use std::process::exit;
 use std::path::Path;
@@ -9,11 +8,11 @@ use age::{Recipient, DecryptError, x25519::Identity};
 use std::fs::File;
 use mpsc::TryRecvError;
 use std::{
-    io::{self, Read, Write},
+    io::{Read, Write},
     net::TcpStream,
     sync::mpsc,
     thread,
-    time::Duration,
+    time::Duration as Dur,
     str::FromStr,
     iter,
 };
@@ -110,7 +109,7 @@ fn saisir_pseudo() -> String {
 // saisie d'un message à envoyer
 fn saisir_message() -> String {
      let mut message = String::new();
-     let tampon = std::io::stdin().read_line(&mut message).unwrap_or(2);
+     let _tampon = std::io::stdin().read_line(&mut message).unwrap_or(2);
  
      message
 }
@@ -152,7 +151,7 @@ pub fn chiffrement_message(message:String,key_public:Box<dyn Recipient +Send>) -
 // déchiffre le message chiffré obtenu en message clair
 pub fn dechiffrement_message(message:String, key_prive:Identity) -> Result<String,ClientError>
 {
-    let message = hex::decode(message).unwrap();
+    let message = hex::decode(message).unwrap_or(vec![4,0,4]);
     let decryptor = match age::Decryptor::new(&message[..])
     {
         Ok(decrypte) => {
@@ -201,15 +200,12 @@ fn main() -> std::io::Result<()> {
     //println!("Saisir la clé publique destinataire !");
     // Stocke la clé en format string et on la converti en format Recipient
     let mut key_str = String::new();
-    std::io::stdin().read_line(&mut key_str).unwrap();
+    std::io::stdin().read_line(&mut key_str).unwrap_or(3);
     // enlever le /n
     let key_str = &key_str[0..key_str.len()-1];
     let key_dest = age::x25519::Recipient::from_str(&key_str).unwrap();
     let stop_db = Arc::new(AtomicBool::new(false));
     let stop_db_clone = stop_db.clone();
-
-
-
 
     thread::spawn(move ||  {
         // Stocke le resulat dans la var result_bdd
@@ -348,8 +344,7 @@ fn main() -> std::io::Result<()> {
                 Err(TryRecvError::Empty) => (),
                 Err(TryRecvError::Disconnected) => break,
             }
-
-            thread::sleep(Duration::from_millis(100));
+            sleep();
     }});
 
 
@@ -358,10 +353,9 @@ fn main() -> std::io::Result<()> {
   //  pseudo_client.as_bytes();
     loop {
         // saisir un message en boucle dans le thread principal
-        let mut buff = String::new();
-        buff = saisir_message();
+        let buff = saisir_message();
 
-        let mut msg = buff.trim().to_string();
+        let msg = buff.trim().to_string();
         // pour quitter proprement le programme ':quit'
         if msg == ":quit" || tx.send(msg).is_err() {
             stop_db.store(true, Ordering::Relaxed);
@@ -391,7 +385,7 @@ mod test
                 exit(1);
             },
         };
-        let message_dechiffre = dechiffrement_message(message_chiffre, key).unwrap();
+        let message_dechiffre = dechiffrement_message(message_chiffre, key).unwrap_or("error".to_string());
         assert_eq!(message , message_dechiffre);
     }
 
