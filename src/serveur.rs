@@ -1,6 +1,3 @@
-// https://book.async.rs/tutorial/index.html
-// https://thepacketgeek.com/rust/tcpstream/reading-and-writing/
-
 use std::{
     io::{ErrorKind, Read, Write},
     net::TcpListener,
