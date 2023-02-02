@@ -1,10 +1,3 @@
-// https://book.async.rs/tutorial/index.html
-
-// use std::net::{TcpStream};
-// use std::io::{Read, Write, ErrorKind};
-// use std::sync::mpsc;
-// use mpsc::TryRecvError;
-// use std::thread;
 use thiserror::Error;
 use std::time::Duration as Dur;
 use std::sync::{Arc, atomic::{AtomicBool, Ordering}};
@@ -12,27 +5,18 @@ use std::process::exit;
 use std::path::Path;
 use serde::{Deserialize, Serialize};
 use serde_json;
-use age::{Recipient, DecryptError};
-use std::str::FromStr;
+use age::{Recipient, DecryptError, x25519::Identity};
 use std::fs::File;
-use std::iter;
 use mpsc::TryRecvError;
-use age;
-use age::x25519::Identity;
 use std::{
     io::{self, Read, Write},
     net::TcpStream,
     sync::mpsc,
     thread,
     time::Duration,
+    str::FromStr,
+    iter,
 };
-
-// trait pour envoyer un message
-// pub trait Message {
-//     fn saisir_message(&self) -> u8;
-//     fn envoyer_message(&self);
-// }
-
 
 // gestion propore des erreurs !
 
@@ -112,26 +96,24 @@ fn sleep() {
     thread::sleep(::std::time::Duration::from_millis(100));
 }
 
+// saisie d'un pseudonyme
 fn saisir_pseudo() -> String {
     let mut pseudo = String::new();
     println!("Saisir votre pseudo : ");
-    let _tmp = std::io::stdin().read_line(&mut pseudo).unwrap();
+    let _tmp = std::io::stdin().read_line(&mut pseudo)
+        .unwrap_or(1);
     println!("Bonjour {} !", pseudo);
 
     pseudo
 }
 
+// saisie d'un message à envoyer
 fn saisir_message() -> String {
-    let mut message = String::new();
-    println!("Saisir votre message : ");
-    let tampon = std::io::stdin().read_line(&mut message).unwrap();
-    println!("Votre message est : {}", message);
-    println!("Taille du message à lire : {}", tampon);
-
-    message
+     let mut message = String::new();
+     let tampon = std::io::stdin().read_line(&mut message).unwrap_or(2);
+ 
+     message
 }
-
-
 
 pub fn generation_des_cles( )-> Identity
 {
@@ -206,22 +188,17 @@ pub fn dechiffrement_message(message:String, key_prive:Identity) -> Result<Strin
     
 }
 
-
-
-fn main() {
-
-    let mut client = TcpStream::connect("localhost:25566")
-        .expect("Stream failed to connect");
-    client
-        .set_nonblocking(true)
-        .expect("failed to initiate non-blocking");
+fn main() -> std::io::Result<()> {
+    let mut client = TcpStream::connect("localhost:25566")?;
+    
+    client.set_nonblocking(true)?;
 
     let (tx, rx) = mpsc::channel::<String>();
     let key = generation_des_cles();
     // L'affichage de la clé publique de l'utilisateur !
     println!("Voici la clé publique {} ",key.to_public());
     // Récuperation de la clé destinataire
-    println!("Saisir la clé publique destinataire !");
+    //println!("Saisir la clé publique destinataire !");
     // Stocke la clé en format string et on la converti en format Recipient
     let mut key_str = String::new();
     std::io::stdin().read_line(&mut key_str).unwrap();
@@ -380,56 +357,22 @@ fn main() {
     println!("{} > ", pseudo_client);
   //  pseudo_client.as_bytes();
     loop {
+        // saisir un message en boucle dans le thread principal
         let mut buff = String::new();
-        io::stdin()
-            .read_line(&mut buff)
-            .expect("reading from stdin failed");
+        buff = saisir_message();
 
-        let msg = buff.trim().to_string();
+        let mut msg = buff.trim().to_string();
+        // pour quitter proprement le programme ':quit'
         if msg == ":quit" || tx.send(msg).is_err() {
             stop_db.store(true, Ordering::Relaxed);
             thread::sleep(Dur::from_secs(2));
             break;
         }
     }
-    println!("Bye bye");
-//    while match socket {
-//        Ok(ref mut socket) => {
-//            println!("Conneté au port 25566");
-//            // let mut message_client = String::new();
-//            // message_client = saisir_message();
-//            //let message_client = saisir_message();
-//            // let msg_octet = message_client.as_bytes();
-//            // let tx: Vec<u8> = [msg_octet, b" > ", pseudo_octet].concat();
-//            // socket.write(&tx).unwrap();
-//            // println!("Message envoyé, en attente d'une réponse...");
-//
-//            // let mut trame = vec![0; BUFFER];
-//            match socket.read(&mut trame) {
-//                Ok(_size) => {
-//                    // code non pertinent pour le projet
-//                    // if &trame != msg_octet {
-//                    //     println!("Reply ok!");
-//                    // } else {
-//                    //     // remplacer le unwrap()
-//                    //     let msg_serveur = from_utf8(&trame).unwrap();
-//                    //     println!("Réponse innatendu : {}", msg_serveur);
-//                    // }
-//                    let rx = from_utf8(&trame).unwrap();
-//                    println!("Réponse serveur : {}", &rx);
-//                },
-//                Err(_e) => {
-//                    println!("Aucune réponse de reçu : {}", _e);
-//                }
-//            }
-//            true
-//        }, Err(ref _e) => {
-//            println!("Impossible de se connecter au serveur !");
-//            false
-//        }
-//    } {}
-    // debug à supprimer à la fin du projet
     println!("fin");
+
+    // nécessaire pour utiliser ? (propagation d'erreur)
+    Ok(())
 }
 
 #[cfg(test)]
