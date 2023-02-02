@@ -85,7 +85,7 @@ pub fn recupere_message(fichier : &str) -> Result<BaseDeDonneesJson, String>
 }
 
 // enregistre  le message et le stocke dans le fichier JSON
-pub fn enregisrtre_message(base_de_donne: BaseDeDonneesJson, fichier : &str) -> Option<String>
+pub fn enregistre_message(base_de_donne: BaseDeDonneesJson, fichier : &str) -> Option<String>
 {
     match File::create(fichier)
     {
@@ -96,13 +96,13 @@ pub fn enregisrtre_message(base_de_donne: BaseDeDonneesJson, fichier : &str) -> 
                      return None;
                  },
                  Err(_)=> {
-                     return Some(String::from("Impossible de sérialiser la base de donnée ! "));
+                     return Some(String::from("Impossible de sérialiser la base de donnée !"));
                  }
             }
         },
         Err(_) =>
         {
-             return Some(String::from("Impossible d'ecrire le  fichier ! "));
+             return Some(String::from("Impossible d'ecrire le fichier !"));
         }
     }
 }
@@ -273,7 +273,7 @@ fn main() {
         loop  {
             if stop_db_clone.load(Ordering::Relaxed) == true {
                 // Save server database
-               match  enregisrtre_message(result_bdd, "bdd.json") {
+               match  enregistre_message(result_bdd, "bdd.json") {
                 Some(err) => {
                     println!("Err:{}" , err);
                     exit(1);
@@ -378,7 +378,7 @@ fn main() {
 
     let pseudo_client = saisir_pseudo();
     println!("{} > ", pseudo_client);
-    pseudo_client.as_bytes();
+  //  pseudo_client.as_bytes();
     loop {
         let mut buff = String::new();
         io::stdin()
@@ -452,4 +452,31 @@ mod test
         assert_eq!(message , message_dechiffre);
     }
 
+    #[test]
+    fn test_enregistre_message_success() {
+        let base_de_donnees = BaseDeDonneesJson {
+            messages: vec![],
+        };
+        let result = enregistre_message(base_de_donnees, "test_file.json");
+        assert_eq!(result, None);
+    }
+
+    #[test]
+    fn test_enregistre_message_echec_creation_fichier() {
+        let base_de_donnees = BaseDeDonneesJson {
+            messages: vec![],
+        };
+        let result = enregistre_message(base_de_donnees, "/this/file/path/does/not/exist/test_file.json");
+        assert_eq!(result, Some(String::from("Impossible d'ecrire le fichier !")));
+    }
+/*
+    #[test]
+    fn test_enregistre_message_echec_serialisation() {
+        let base_de_donnees = BaseDeDonneesJson {
+            messages: vec![],
+        };
+        let result = enregistre_message(base_de_donnees, "/root/test_file.json");
+        assert_eq!(result, Some(String::from("Impossible de sérialiser la base de donnée !")));
+    }*/
 }
+
