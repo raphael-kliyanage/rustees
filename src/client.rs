@@ -406,14 +406,4 @@ mod test
         let result = enregistre_message(base_de_donnees, "/this/file/path/does/not/exist/test_file.json");
         assert_eq!(result, Some(String::from("Impossible d'ecrire le fichier !")));
     }
-/*
-    #[test]
-    fn test_enregistre_message_echec_serialisation() {
-        let base_de_donnees = BaseDeDonneesJson {
-            messages: vec![],
-        };
-        let result = enregistre_message(base_de_donnees, "/root/test_file.json");
-        assert_eq!(result, Some(String::from("Impossible de sérialiser la base de donnée !")));
-    }*/
 }
-
