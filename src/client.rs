@@ -197,7 +197,7 @@ fn main() -> std::io::Result<()> {
     // L'affichage de la clé publique de l'utilisateur !
     println!("Voici la clé publique {} ",key.to_public());
     // Récuperation de la clé destinataire
-    //println!("Saisir la clé publique destinataire !");
+    println!("Saisir la clé publique destinataire !");
     // Stocke la clé en format string et on la converti en format Recipient
     let mut key_str = String::new();
     std::io::stdin().read_line(&mut key_str).unwrap_or(3);
