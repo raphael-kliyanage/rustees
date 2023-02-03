@@ -17,7 +17,7 @@ use std::{
     iter,
 };
 
-// gestion propore des erreurs !
+// gestion propore des erreurs 
 
 #[derive(Error, Debug)]
 pub enum ClientError 
@@ -47,7 +47,7 @@ pub enum TypeDeMessage
      messages:Vec<(String , TypeDeMessage)>
  }
 
-// lire le fichier  qui contient  les message et le cree la de donneé
+// lire le fichier  qui contient  les message et le crée la base de donnée
 pub fn recupere_message(fichier : &str) -> Result<BaseDeDonneesJson, String>
 {
     match  File::open(fichier) {
@@ -90,7 +90,7 @@ pub fn enregistre_message(base_de_donne: BaseDeDonneesJson, fichier : &str) -> O
     }
 }
 
-
+// pause de 100ms
 fn sleep() {
     thread::sleep(::std::time::Duration::from_millis(100));
 }
@@ -100,7 +100,7 @@ fn saisir_pseudo() -> String {
     let mut pseudo = String::new();
     println!("Saisir votre pseudo : ");
     let _tmp = std::io::stdin().read_line(&mut pseudo)
-        .unwrap_or(1);
+        .unwrap_or(1);  // en cas d'erreur renvoie 1
     println!("Bonjour {} !", pseudo);
 
     pseudo
@@ -110,6 +110,7 @@ fn saisir_pseudo() -> String {
 fn saisir_message() -> String {
      let mut message = String::new();
      let _tampon = std::io::stdin().read_line(&mut message).unwrap_or(2);
+     // _tampon renvoie 2 en cas d'erreur
  
      message
 }
@@ -188,10 +189,14 @@ pub fn dechiffrement_message(message:String, key_prive:Identity) -> Result<Strin
 }
 
 fn main() -> std::io::Result<()> {
+    // le client cherche le serveur au port 25566
+    // fonctionne avec une adresse privée et public
     let mut client = TcpStream::connect("localhost:25566")?;
     
+    // rend les méthodes read, write, recv et send non bloquantes
     client.set_nonblocking(true)?;
 
+    // chaine synchonisé avec un expéditeur et destinataire
     let (tx, rx) = mpsc::channel::<String>();
     let key = generation_des_cles();
     // L'affichage de la clé publique de l'utilisateur !
@@ -207,6 +212,7 @@ fn main() -> std::io::Result<()> {
     let stop_db = Arc::new(AtomicBool::new(false));
     let stop_db_clone = stop_db.clone();
 
+    // thread secondaire
     thread::spawn(move ||  {
         // Stocke le resulat dans la var result_bdd
         let  mut result_bdd = match Path::new("bdd.json").exists()
@@ -230,7 +236,7 @@ fn main() -> std::io::Result<()> {
 
         };
 
-        // affichage des message a partir de la base de donnée
+        // affichage des message a partir de la base de données
         for (message, type_msg) in &result_bdd.messages
         {
             match  type_msg {
@@ -354,7 +360,7 @@ fn main() -> std::io::Result<()> {
     loop {
         // saisir un message en boucle dans le thread principal
         let buff = saisir_message();
-
+        // mise en forme du message puis conversion en String
         let msg = buff.trim().to_string();
         // pour quitter proprement le programme ':quit'
         if msg == ":quit" || tx.send(msg).is_err() {
@@ -365,7 +371,7 @@ fn main() -> std::io::Result<()> {
     }
     println!("fin");
 
-    // nécessaire pour utiliser ? (propagation d'erreur)
+    // nécessaire pour utiliser (propagation d'erreur)
     Ok(())
 }
 

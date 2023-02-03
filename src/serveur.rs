@@ -5,25 +5,34 @@ use std::{
     thread,
 };
 
+// fonction pour créer une pausse de 100ms
 fn sleep() {
     thread::sleep(::std::time::Duration::from_millis(100));
 }
 
 fn main() -> std::io::Result<()> {
     const TAILLE_MSG: usize = 4096;  // mem tampon à 4096 octets
+    
+    // port 25566
+    // fonctionne avec une adresse privée et public
     let server = TcpListener::bind("localhost:25566")?;
-    server
-        .set_nonblocking(true)?;
+    // rend les méthodes read, write, recv et send non bloquantes
+    server.set_nonblocking(true)?;
 
+    // vecteurs pour stocker les socket des clients
     let mut clients = vec![];
     let (tx, rx) = mpsc::channel::<String>();
     loop {
+        // boucle d'acceptation des clients
         if let Ok((mut socket, addr)) = server.accept() {
             println!("Client {} connected", addr);
 
+            // clonage + stockage du socket dans le vecteur des clients
+            // primordial pour distribuer un message à tous les clients
             let tx = tx.clone();
             clients.push(socket.try_clone()?);
 
+            // thread secondaire pour envoyer des trames sur le réseau
             thread::spawn(move || loop {
                 // Buffer temporaire (morceaux du message)
                 let mut buff = vec![0; TAILLE_MSG];
@@ -53,11 +62,14 @@ fn main() -> std::io::Result<()> {
                     println!("{} {:?} len={}", addr, msg, msg.len());
                     tx.send(msg).expect("failed to send message to rx");
                 }
+                // pause de 100ms pour soulager les ressources
                 sleep();
             });
         }
 
+        // thread principal pour reçevoir des trames
         if let Ok(msg) = rx.try_recv() {
+            // itération du vecteur client
             clients = clients
                 .into_iter()
                 .filter_map(|mut client| {
@@ -68,7 +80,7 @@ fn main() -> std::io::Result<()> {
                 })
                 .collect::<Vec<_>>();
         }
-
+        // pause de 100ms pour soulager les ressources
         sleep();
     }
     Ok(())
